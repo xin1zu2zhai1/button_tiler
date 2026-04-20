@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>リンクボタン埋め込みHTMLジェネレーター</title>
+    <style>
+        /* GitHub Pagesなどの汎用環境向けにカラー変数を定義 */
+        :root {
+            --color-background-primary: #ffffff;
+            --color-background-secondary: #f9fafb;
+            --color-background-danger: #fef2f2;
+            --color-text-primary: #111827;
+            --color-text-secondary: #4b5563;
+            --color-text-tertiary: #9ca3af;
+            --color-text-danger: #dc2626;
+            --color-text-success: #16a34a;
+            --color-border-secondary: #d1d5db;
+            --color-border-tertiary: #e5e7eb;
+            --color-border-danger: #fca5a5;
+            --color-border-success: #86efac;
+            --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            --border-radius-md: 6px;
+            --border-radius-lg: 10px;
+        }
+
+        body {
+            margin: 0;
+            padding: 20px;
+            background-color: #fff;
+            color: var(--color-text-primary);
+            font-family: var(--font-sans);
+            display: flex;
+            justify-content: center;
+        }
+
+        /* 元のスタイルを統合 */
+        * { box-sizing: border-box; }
+        .wrap { width: 100%; max-width: 800px; padding: 1rem; border: 1px solid var(--color-border-tertiary); border-radius: 12px; }
+        .section-label { font-size: 12px; color: var(--color-text-secondary); letter-spacing: 0.06em; text-transform: uppercase; margin: 0 0 8px; font-weight: bold; }
+        .col-header { font-size: 11px; color: var(--color-text-tertiary); padding-bottom: 3px; }
+        .cols-head { display: grid; grid-template-columns: 1.4fr 1fr 36px 36px 36px; gap: 8px; margin-bottom: 4px; }
+        .row { display: grid; grid-template-columns: 1.4fr 1fr 36px 36px 36px; gap: 8px; margin-bottom: 8px; align-items: center; }
+        .row input[type=text], .row input[type=url] { height: 34px; padding: 0 10px; border: 0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); background: var(--color-background-primary); color: var(--color-text-primary); font-size: 13px; font-family: var(--font-sans); outline: none; width: 100%; }
+        .row input:focus { border-color: #3b82f6; box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1); }
+        input[type=color] { width: 34px; height: 34px; border: 0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); padding: 2px 3px; background: var(--color-background-primary); cursor: pointer; }
+        .btn-icon { width: 34px; height: 34px; border: 0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); background: transparent; color: var(--color-text-secondary); font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+        .btn-icon:hover { background: var(--color-background-danger); color: var(--color-text-danger); border-color: var(--color-border-danger); }
+        .btn-add { display: inline-flex; align-items: center; gap: 6px; padding: 0 14px; height: 32px; border: 0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); background: transparent; color: var(--color-text-secondary); font-size: 13px; cursor: pointer; margin-top: 4px; }
+        .btn-add:hover { background: var(--color-background-secondary); }
+        .divider { border: none; border-top: 0.5px solid var(--color-border-tertiary); margin: 1.25rem 0; }
+        .layout-bar { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 1rem; }
+        .layout-label { font-size: 12px; color: var(--color-text-secondary); }
+        .seg { display: flex; border: 0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); overflow: hidden; }
+        .seg button { height: 30px; padding: 0 14px; background: transparent; border: none; border-right: 0.5px solid var(--color-border-secondary); font-size: 12px; color: var(--color-text-secondary); cursor: pointer; }
+        .seg button:last-child { border-right: none; }
+        .seg button.active { background: #e5e7eb; color: var(--color-text-primary); font-weight: 500; }
+        .matrix-opts { display: flex; gap: 8px; align-items: center; }
+        .matrix-opts input[type=number] { width: 48px; height: 30px; padding: 0 8px; border: 0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); }
+        .option-bar { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-bottom: 1rem; }
+        .preview-area { padding: 1rem; border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-lg); background: var(--color-background-secondary); min-height: 60px; overflow-x: auto; }
+        .code-block { background: #1e1e1e; border-radius: var(--border-radius-lg); padding: 1rem; margin-top: 8px; }
+        .code-block pre { margin: 0; font-size: 12px; font-family: var(--font-mono); color: #d4d4d4; white-space: pre-wrap; word-break: break-all; }
+        .btn-copy { padding: 0 14px; height: 28px; border: 0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); background: #fff; cursor: pointer; font-size: 12px; }
+        .hidden { display: none !important; }
+        .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); border: 0; }
+    </style>
+</head>
+<body>
+
+<div class="wrap">
+    <h1 style="font-size: 1.25rem; margin-bottom: 1.5rem;">HTML Button Generator</h1>
+
+    <div class="layout-bar">
+        <span class="layout-label">配置スタイル</span>
+        <div class="seg" id="layoutSeg">
+            <button class="active" data-layout="column">縦一列</button>
+            <button data-layout="row">横一列</button>
+            <button data-layout="matrix">マトリクス</button>
+        </div>
+        <div class="matrix-opts hidden" id="matrixOpts">
+            <label class="layout-label">列数</label>
+            <input type="number" id="matCols" value="3" min="1" max="10">
+        </div>
+    </div>
+
+    <div class="option-bar">
+        <label style="font-size: 12px; color: var(--color-text-secondary);"><input type="checkbox" id="newTab" checked> 新規タブで開く</label>
+        <label style="font-size: 12px; color: var(--color-text-secondary);">角丸: 
+            <select id="radius">
+                <option value="4px">小</option>
+                <option value="8px" selected>中</option>
+                <option value="20px">大</option>
+                <option value="9999px">丸型</option>
+            </select>
+        </label>
+    </div>
+
+    <div class="cols-head">
+        <div class="col-header">URL</div>
+        <div class="col-header">ラベル</div>
+        <div class="col-header" style="text-align:center">背景</div>
+        <div class="col-header" style="text-align:center">文字</div>
+        <div></div>
+    </div>
+    <div id="inputs"></div>
+    <button class="btn-add" id="addBtn">+ ボタンを追加</button>
+
+    <hr class="divider">
+    <p class="section-label">プレビュー</p>
+    <div class="preview-area" id="preview"></div>
+
+    <hr class="divider">
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+        <p class="section-label">埋め込みコード</p>
+        <button class="btn-copy" id="copyBtn">コードをコピー</button>
+    </div>
+    <div class="code-block">
+        <pre id="codeOut"></pre>
+    </div>
+</div>
+
+<script>
+    let rows = [], idCnt = 0, layout = 'column';
+    const DEFAULTS = ['#1a1a1a','#2563eb','#16a34a','#dc2626','#7c3aed','#ea580c'];
+
+    function addRow(url='', label='', bg='', text='#ffffff') {
+        const id = idCnt++;
+        if (!bg) bg = DEFAULTS[rows.length % DEFAULTS.length];
+        rows.push({id, url, label, bg, text});
+        renderInputs(); updateAll();
+    }
+
+    function removeRow(id) {
+        if (rows.length <= 1) return;
+        rows = rows.filter(r => r.id !== id);
+        renderInputs(); updateAll();
+    }
+
+    function renderInputs() {
+        const c = document.getElementById('inputs');
+        c.innerHTML = '';
+        rows.forEach(r => {
+            const d = document.createElement('div');
+            d.className = 'row';
+            d.innerHTML = `
+                <input type="url" placeholder="https://example.com" value="${esc(r.url)}" data-id="${r.id}" data-field="url">
+                <input type="text" placeholder="ラベル" value="${esc(r.label)}" data-id="${r.id}" data-field="label">
+                <input type="color" value="${r.bg}" data-id="${r.id}" data-field="bg">
+                <input type="color" value="${r.text}" data-id="${r.id}" data-field="text">
+                <button class="btn-icon" data-id="${r.id}">×</button>
+            `;
+            c.appendChild(d);
+        });
+        c.querySelectorAll('input').forEach(inp => {
+            inp.addEventListener('input', e => {
+                const r = rows.find(row => row.id === +e.target.dataset.id);
+                if (r) { r[e.target.dataset.field] = e.target.value; updateAll(); }
+            });
+        });
+        c.querySelectorAll('.btn-icon').forEach(btn => {
+            btn.addEventListener('click', e => removeRow(+e.target.dataset.id));
+        });
+    }
+
+    function esc(s) { return (s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+    function getLabel(r) {
+        if (r.label.trim()) return r.label.trim();
+        try { return new URL(r.url).hostname.replace(/^www\./,'') || 'Link'; } catch { return 'Link'; }
+    }
+
+    const ARROW = `<svg width="10" height="10" viewBox="0 0 10 10" fill="none" style="opacity:.7;flex-shrink:0;margin-left:6px"><path d="M2 8L8 2M8 2H4M8 2V6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+
+    function updateAll() {
+        const radius = document.getElementById('radius').value;
+        const newTab = document.getElementById('newTab').checked;
+        const matCols = +document.getElementById('matCols').value || 3;
+        const valid = rows.filter(r => r.url.trim());
+        const preview = document.getElementById('preview');
+
+        if (!valid.length) {
+            preview.innerHTML = '<span style="color:#9ca3af;font-size:13px;">URLを入力してください</span>';
+            document.getElementById('codeOut').textContent = '';
+            return;
+        }
+
+        const targetAttr = newTab ? ' target="_blank" rel="noopener noreferrer"' : '';
+        let wrapStyle = 'display:flex;gap:10px;';
+        if (layout === 'column') wrapStyle += 'flex-direction:column;align-items:flex-start;';
+        else if (layout === 'row') wrapStyle += 'flex-wrap:wrap;align-items:center;';
+        else wrapStyle = `display:grid;grid-template-columns:repeat(${matCols}, 1fr);gap:10px;`;
+
+        const btnHtml = valid.map(r => {
+            const s = `display:inline-flex;align-items:center;justify-content:center;padding:0 18px;height:38px;background:${r.bg};color:${r.text};border-radius:${radius};font-family:sans-serif;font-size:14px;text-decoration:none;white-space:nowrap;transition:opacity 0.2s;`;
+            return `<a href="${esc(r.url)}"${targetAttr} style="${s}">${esc(getLabel(r))}${ARROW}</a>`;
+        }).join('');
+
+        preview.innerHTML = `<div style="${wrapStyle}">${btnHtml}</div>`;
+        document.getElementById('codeOut').textContent = `<div style="${wrapStyle}">\n${valid.map(r => `  <a href="${esc(r.url)}"${targetAttr} style="display:inline-flex;align-items:center;justify-content:center;padding:0 18px;height:38px;background:${r.bg};color:${r.text};border-radius:${radius};font-family:sans-serif;font-size:14px;text-decoration:none;">${esc(getLabel(r))}</a>`).join('\n')}\n</div>`;
+    }
+
+    document.getElementById('addBtn').addEventListener('click', () => addRow());
+    document.getElementById('radius').addEventListener('change', updateAll);
+    document.getElementById('newTab').addEventListener('change', updateAll);
+    document.getElementById('matCols').addEventListener('input', updateAll);
+
+    document.getElementById('layoutSeg').querySelectorAll('button').forEach(btn => {
+        btn.addEventListener('click', e => {
+            layout = e.target.dataset.layout;
+            document.querySelectorAll('#layoutSeg button').forEach(b => b.classList.remove('active'));
+            e.target.classList.add('active');
+            document.getElementById('matrixOpts').classList.toggle('hidden', layout !== 'matrix');
+            updateAll();
+        });
+    });
+
+    document.getElementById('copyBtn').addEventListener('click', () => {
+        navigator.clipboard.writeText(document.getElementById('codeOut').textContent).then(() => {
+            const btn = document.getElementById('copyBtn');
+            btn.textContent = '✓ コピー完了';
+            setTimeout(() => btn.textContent = 'コードをコピー', 2000);
+        });
+    });
+
+    addRow();
+</script>
+</body>
+</html>
